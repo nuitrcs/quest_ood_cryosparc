@@ -1,0 +1,19 @@
+# Export the module function if it exists
+[[ $(type -t module) == "function" ]] && export -f module
+
+# Find available port to run TDPortal On
+port=$(find_port localhost 7000 11000 )
+
+# Make a directory for the crosparc socket and then delete it if it already exists on the node
+mkdir -p /tmp/${USER}/
+rm /tmp/${USER}/cryosparc-supervisor.sock
+
+export CRYOSPARC_MASTER_HOSTNAME=${CRYOSPARC_MASTER_HOSTNAME:-$(hostname -s)}
+
+echo "export CRYOSPARC_BASE_PORT=$port" >> /app/cryosparc_master/config.sh
+echo "export CRYOSPARC_MASTER_HOSTNAME=${CRYOSPARC_MASTER_HOSTNAME}" >> /app/cryosparc_master/config.sh
+echo "export CRYOSPARC_HOSTNAME_CHECK=${CRYOSPARC_MASTER_HOSTNAME}" >> /app/cryosparc_master/config.sh
+echo "export CRYOSPARC_SUPERVISOR_SOCK_FILE='/tmp/${USER}/cryosparc-supervisor.sock'" >> /app/cryosparc_master/config.sh 
+echo "export CRYOSPARC_LICENSE_ID=${CRYOSPARC_LICENSE_ID}" >> /app/cryosparc_master/config.sh
+
+echo "export CRYOSPARC_LICENSE_ID=${CRYOSPARC_LICENSE_ID}" >> /app/cryosparc_worker/config.sh

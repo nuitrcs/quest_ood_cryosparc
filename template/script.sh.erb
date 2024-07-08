@@ -1,0 +1,50 @@
+#!/usr/bin/env bash 
+echo "Setting cryosparc PATH"
+export PATH=${CRYOSPARC_MASTER_DIR}/bin:${CRYOSPARC_WORKER_DIR}/bin:${CRYOSPARC_MASTER_DIR}/deps/anaconda/bin/:$PATH
+
+echo "Starting cryosparc master..."
+cd ${CRYOSPARC_MASTER_DIR}
+
+# envs
+THIS_USER=$(whoami)
+THIS_USER_SUFFIX=${USER_SUFFIX:-'@northwestern.edu'}
+cryosparcm start
+
+# always set the password to license
+cryosparcm createuser --email "${THIS_USER}${THIS_USER_SUFFIX}" \
+                      --password "temppassword" \
+                      --username "${THIS_USER}" \
+                      --firstname "Scott" \
+                      --lastname "Coughlin"
+
+# remove all existing lanes and register standard lanes
+echo "Registering job lanes..."
+# add slurm lanes
+for i in `ls -1 /app/slurm/`; do
+  cd /app/slurm/$i
+  /app/cryosparc_master/bin/cryosparcm cluster connect
+done
+cd ${CRYOSPARC_MASTER_DIR}
+
+echo "Success starting cryosparc master!"
+
+
+###
+# worker initiation
+###
+echo "Starting cryosparc worker for ${CRYOSPARC_MASTER_HOSTNAME}..."
+export TMPDIR=${TMPDIR:-"/scratch/${THIS_USER}"}/cryosparc/
+mkdir -p ${TMPDIR}
+
+cd ${CRYOSPARC_WORKER_DIR}
+# assume same config file
+
+# start worker
+cryosparcw connect --worker ${CRYOSPARC_MASTER_HOSTNAME} --master ${CRYOSPARC_MASTER_HOSTNAME} --ssdpath $TMPDIR/ --port $port --cpus ${SLURM_NPROCS}
+
+###
+# monitor forever
+###
+echo "Success starting cryosparc worker!"
+
+sleep 3600
