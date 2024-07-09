@@ -4,11 +4,22 @@
 # Find available port to run TDPortal On
 port=$(find_port localhost 7000 11000 )
 
+# create a password for this cryosparc session
+export cs_password="$(create_passwd 16)"
+export cs_email="${USER}@northwestern.edu"
+
+
+# This is for conn_params
+export ssh_tunnel="ssh -L ${port}:localhost:${port} $USER@quest.northwestern.edu ssh -N -L ${port}:localhost:${port} ${host}"
+export connection_string="http://localhost:${port}"
+export staged_root=<%= session.staged_root.join("connection.yml") %>
+
 # Make a directory for the crosparc socket and then delete it if it already exists on the node
 mkdir -p /tmp/${USER}/
 rm /tmp/${USER}/cryosparc-supervisor.sock
 
 export CRYOSPARC_MASTER_HOSTNAME=${CRYOSPARC_MASTER_HOSTNAME:-$(hostname -s)}
+export CRYOSPARC_BASE_PORT=$port
 
 echo "export CRYOSPARC_BASE_PORT=$port" >> /app/cryosparc_master/config.sh
 echo "export CRYOSPARC_MASTER_HOSTNAME=${CRYOSPARC_MASTER_HOSTNAME}" >> /app/cryosparc_master/config.sh

@@ -1,6 +1,13 @@
-<form id="test" action="/rnode/<%= host %>/<%= port %>/" method="get" target="_blank">
-  <button class="btn btn-primary" type="submit">
-    <i class="fa fa-cogs"></i> Connect to Cryosparc
-  </button>
-</form>
+<%-
+  cryosparc_connection_info = OodAppkit.files.url(path: staged_root).to_s
+%>
+<p>
+To connect to cryosparc, please open a terminal on your <em>local</em> computer and run the following command: <code><%= ssh_tunnel %></code>
+<p>
+<p>
+Once you have done this, open your <em>local</em> browser of choice and enter the following URL: <code><%= connection_string %></code>
+<p>
+<p>
+At this point, you will be asked to enter a username and password, which you can find here: <a href="<%= cryosparc_connection_info %>">connection.yml</a>
+<p>
 

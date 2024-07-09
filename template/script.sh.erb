@@ -1,33 +1,120 @@
 #!/usr/bin/env bash 
+<%
+session_dir = session.staged_root
+new_session_file = Pathname.new(session_dir.to_s) + ".first_run"
+fileObject = File.open("#{Dir.home}/.groupdata_ondemand_out.txt", "r");
+all_slurm_allocations = fileObject.read();
+fileObject.close();
+list_of_general_access_allocations = []
+list_of_buyin_allocations = []
+all_slurm_allocations = all_slurm_allocations.split(",")
+all_slurm_allocations.each do |slurm_allocation|
+    if slurm_allocation.include? "p"
+        list_of_general_access_allocations.append(slurm_allocation)
+    elsif slurm_allocation.include? "b"
+        list_of_buyin_allocations.append(slurm_allocation)
+    end
+end
+%>
+
 echo "Setting cryosparc PATH"
 export PATH=${CRYOSPARC_MASTER_DIR}/bin:${CRYOSPARC_WORKER_DIR}/bin:${CRYOSPARC_MASTER_DIR}/deps/anaconda/bin/:$PATH
+
+# Set variables
+export WORKING_DIR="<%= session_dir %>"
+ 
+# Check for GPUs
+<%- if context.gres_value != "" -%>
+usegpu="--gpus $CUDA_VISIBLE_DEVICES"
+<%- else -%>
+usegpu="--nogpu"
+<%- end -%>
 
 echo "Starting cryosparc master..."
 cd ${CRYOSPARC_MASTER_DIR}
 
-# envs
-THIS_USER=$(whoami)
-THIS_USER_SUFFIX=${USER_SUFFIX:-'@northwestern.edu'}
-cryosparcm start
+# Set CryoSPARC user information
+user_email="${USER}@northwestern.edu"
+user_name="${USER}"
+user_password="${cs_password}"
+user_firstname="$(getent passwd $USER | cut -d: -f5 | cut -f1 -d ' ')"
+user_lastname="$(getent passwd $USER | cut -d: -f5 | cut -f2 -d ' ')"
 
-# always set the password to license
-cryosparcm createuser --email "${THIS_USER}${THIS_USER_SUFFIX}" \
-                      --password "temppassword" \
-                      --username "${THIS_USER}" \
-                      --firstname "Scott" \
-                      --lastname "Coughlin"
+# Env vars for the cryosparc-tools package
+export CRYOSPARC_LICENSE_ID="${CS_LICENSE}"
+export CRYOSPARC_EMAIL="${user_email}"
+export CRYOSPARC_PASSWORD="${user_password}"
+export CRYOSPARC_SLURM_MEMORY="<%= context.memory_per_node %>"
 
-# remove all existing lanes and register standard lanes
-echo "Registering job lanes..."
-# add slurm lanes
-for i in `ls -1 /app/slurm/`; do
-  cd /app/slurm/$i
-  /app/cryosparc_master/bin/cryosparcm cluster connect
-done
-cd ${CRYOSPARC_MASTER_DIR}
 
-echo "Success starting cryosparc master!"
+if [ -f ${WORKING_DIR}/.first_run ]
+then
+    cryosparcm start &
+    sleep 30
+    cryosparcm createuser \
+    --email $user_email \
+    --password $user_password \
+    --username $user_name \
+    --firstname $user_firstname \
+    --lastname  $user_lastname
+else
+    cryosparcm start database &
+    sleep 15
+    cryosparcm fixdbport &
+    cryosparcm restart &
+    sleep 30
+    cryosparcm resetpassword --email $user_email --password $user_password
+fi
 
+<%- list_of_general_access_allocations.each do |ga_allocation| %>
+mkdir -p ${WORKING_DIR}/slurm/quest_<%= ga_allocation %>/
+# Write cluster configuration json file
+cat << EOF > ${WORKING_DIR}/slurm/quest_<%= ga_allocation %>/cluster_info.json
+{
+"name" : "Quest <%= ga_allocation %>",
+"worker_bin_path" : "/app/cryosparc_worker/bin/cryosparcw",
+"cache_path" : "/tmp",
+"cache_reserve_mb" : 10000,
+"cache_quota_mb": null,
+"send_cmd_tpl" : "{{ command }}",
+"qsub_cmd_tpl" : "sbatch {{ script_path_abs }}",
+"qstat_cmd_tpl" : "squeue -j {{ cluster_job_id }}",
+"qdel_cmd_tpl" : "scancel {{ cluster_job_id }}",
+"qinfo_cmd_tpl" : "sinfo"
+}
+EOF
+
+# Write SLURM job submission template
+cat << EOF > ${WORKING_DIR}/slurm/quest_<%= ga_allocation %>/cluster_script.sh
+#!/bin/bash
+#SBATCH --job-name=cryosparc_{{ project_uid }}_{{ job_uid }}
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node={{ num_cpu }}
+#SBATCH --account=<%= ga_allocation %>
+{%- if num_gpu == 0 %}
+#SBATCH --partition=short
+{%- else %}
+#SBATCH --partition=gengpu
+#SBATCH --gres=gpu:{{ num_gpu }}
+{%- endif %}
+#SBATCH --mem={{ (ram_gb*1000)|int }}MB
+#SBATCH --time=04:00:00
+#SBATCH --output={{ job_dir_abs }}/job_%J.out
+#SBATCH --error={{ job_dir_abs }}/job_%J.err
+
+module purge
+module load singularity
+
+{%- if num_gpu == 0 %}
+singularity exec -B "<%= session_dir %>"/config_worker.sh:/app/cryosparc_worker/config.sh $SING_BINDS "${container_image}" {{ worker_bin_path }} run {{ run_args }} --nogpu
+{%- else %}
+singularity exec -B "<%= session_dir %>"/config_worker.sh:/app/cryosparc_worker/config.sh --nv $SING_BINDS "${container_image}" {{ worker_bin_path }} run {{ run_args }}
+{%- endif %}
+EOF
+# Add lane
+pushd ${WORKING_DIR}/slurm/quest_<%= ga_allocation %> && cryosparcm cluster connect && popd
+ 
+<%- end %>
 
 ###
 # worker initiation
@@ -40,11 +127,15 @@ cd ${CRYOSPARC_WORKER_DIR}
 # assume same config file
 
 # start worker
-cryosparcw connect --worker ${CRYOSPARC_MASTER_HOSTNAME} --master ${CRYOSPARC_MASTER_HOSTNAME} --ssdpath $TMPDIR/ --port $port --cpus ${SLURM_NPROCS}
+cryosparcw connect --worker ${CRYOSPARC_MASTER_HOSTNAME} --master ${CRYOSPARC_MASTER_HOSTNAME} --ssdpath $TMPDIR/ --port $port --cpus ${SLURM_NPROCS} $usegpu --rams ${CRYOSPARC_SLURM_MEMORY}
+
+echo "Success starting cryosparc worker!"
 
 ###
 # monitor forever
 ###
-echo "Success starting cryosparc worker!"
 
-sleep 3600
+echo "tailing logs..."
+while [ 1 ]; do
+    tail -f ${CRYOSPARC_MASTER_DIR}/run/command_core.log
+done

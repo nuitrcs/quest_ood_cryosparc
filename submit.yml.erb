@@ -9,6 +9,12 @@
 batch_connect:
   template: basic
   websockify_cmd: '/usr/bin/websockify'
+  conn_params:
+    - ssh_tunnel
+    - connection_string
+    - staged_root
+    - cs_email
+    - cs_password
   script_wrapper: |
     module purge
     module load singularity
@@ -24,10 +30,10 @@ batch_connect:
     export SING_BINDS="--bind /software:/software --bind /hpc/software:/hpc/software"
 
     ## bind some extra stuff to be able to talk to slurm from within the container
-    export SING_BINDS="$SING_BINDS -B /etc/passwd -B /etc/slurm -B `which sbatch ` -B `which srun ` -B `which sacct ` -B `which scontrol ` -B `which salloc ` -B `which scancel ` -B `which squeue ` -B /usr/lib64/slurm/ -B /usr/lib64/libmunge.so.2 -B /usr/lib64/libmunge.so.2.0.0 -B /usr/lib64/libpmi2.so -B /usr/lib64/libpmi2.so.0 -B /usr/lib64/libpmi2.so.0.0.0 -B /usr/lib64/libpmi.so -B /usr/lib64/libpmi.so.0 -B /usr/lib64/libpmi.so.0.0.0 -B /run"
+    export SLURM_BINDS="-B /etc/passwd -B /etc/slurm -B `which sbatch ` -B `which srun ` -B `which sacct ` -B `which scontrol ` -B `which salloc ` -B `which scancel ` -B `which squeue ` -B /usr/lib64/slurm/ -B /usr/lib64/libmunge.so.2 -B /usr/lib64/libmunge.so.2.0.0 -B /usr/lib64/libpmi2.so -B /usr/lib64/libpmi2.so.0 -B /usr/lib64/libpmi2.so.0.0.0 -B /usr/lib64/libpmi.so -B /usr/lib64/libpmi.so.0 -B /usr/lib64/libpmi.so.0.0.0 -B /run"
 
     ## bind some extra stuff to be able to talk to slurm from within the container
-    export SING_BINDS="$SING_BINDS -B /usr/local/pmix -B /usr/local/hwloc -B /usr/local/ucx-1.13.0 -B /usr/local/ucx-1.10.0 -B /usr/local/ucx-1.8.1 -B /usr/local/spack -B /usr/local/spack_v20d1 -B /usr/local/libevent/ " 
+    export SLURM_BINDS="$SLURM_BINDS -B /usr/local/pmix -B /usr/local/hwloc -B /usr/local/ucx-1.13.0 -B /usr/local/ucx-1.10.0 -B /usr/local/ucx-1.8.1 -B /usr/local/spack -B /usr/local/spack_v20d1 -B /usr/local/libevent/ " 
 
     # only bind /kellogg is individual is part of kellogg group
     export SING_BINDS="$SING_BINDS <%= groups.include?('kellogg') ? "--bind /kellogg/:/kellogg/" : "" %>"
@@ -51,15 +57,17 @@ batch_connect:
     ### ensure we have a cryosparc directory under home ##
     ######################################################
     export CRYOSPARC_DATADIR=${HOME}/cryosparc
-    echo "Creating cryosparc datadir ${CRYOSPARC_DATADIR}..."
-    mkdir -p ${CRYOSPARC_DATADIR}/${SLURM_JOB_ID}
-    mkdir -p ${CRYOSPARC_DATADIR}/run
-    mkdir -p ${CRYOSPARC_DATADIR}/cryosparc_database
+    if [ ! -d "$CRYOSPARC_DATADIR" ]; then
+        touch <%= staged_root %>/.first_run
+        echo "Creating cryosparc datadir ${CRYOSPARC_DATADIR}..."
+        mkdir -p ${CRYOSPARC_DATADIR}/run
+        mkdir -p ${CRYOSPARC_DATADIR}/cryosparc_database
+    fi
 
     ######################################################
     ### Create the place holder config_master.sh file ####
     ######################################################
-    cat >${CRYOSPARC_DATADIR}/${SLURM_JOB_ID}/config_master.sh <<END
+    cat ><%= staged_root %>/config_master.sh <<END
     # Instance Configuration
     export CRYOSPARC_DB_PATH="/app/cryosparc_database"
     export CRYOSPARC_DB_CONNECTION_TIMEOUT_MS=20000
@@ -86,13 +94,13 @@ batch_connect:
     ######################################################
     ### Create the place holder config_master.sh file ####
     ######################################################
-    cat >${CRYOSPARC_DATADIR}/${SLURM_JOB_ID}/config_worker.sh <<END
+    cat ><%= staged_root %>/config_worker.sh <<END
     <%- if gres_value != "" %>
     export CRYOSPARC_USE_GPU=true
     <%- end %>
     END
 
-    singularity exec -B /hpc/software/cryosparc/slurm:/app/slurm -B ${CRYOSPARC_DATADIR}/run:/app/cryosparc_master/run -B ${CRYOSPARC_DATADIR}/cryosparc_database:/app/cryosparc_database -B ${CRYOSPARC_DATADIR}/${SLURM_JOB_ID}/config_master.sh:/app/cryosparc_master/config.sh -B ${CRYOSPARC_DATADIR}/${SLURM_JOB_ID}/config_worker.sh:/app/cryosparc_worker/config.sh $SING_GPU $SING_BINDS "${container_image}" /bin/bash container.sh
+    singularity exec -B ${CRYOSPARC_DATADIR}/run:/app/cryosparc_master/run -B ${CRYOSPARC_DATADIR}/cryosparc_database:/app/cryosparc_database -B <%= staged_root %>/config_master.sh:/app/cryosparc_master/config.sh -B <%= staged_root %>/config_worker.sh:/app/cryosparc_worker/config.sh $SING_GPU $SLURM_BINDS $SING_BINDS "${container_image}" /bin/bash container.sh
 
   header: | 
     #!/bin/bash
