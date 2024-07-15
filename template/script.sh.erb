@@ -44,7 +44,8 @@ user_lastname="$(getent passwd $USER | cut -d: -f5 | cut -f2 -d ' ')"
 export CRYOSPARC_LICENSE_ID="${CS_LICENSE}"
 export CRYOSPARC_EMAIL="${user_email}"
 export CRYOSPARC_PASSWORD="${user_password}"
-export CRYOSPARC_SLURM_MEMORY="<%= context.memory_per_node %>"
+export SLURM_MEMORY="<%= context.memory_per_node %>"
+export CRYOSPARC_SLURM_MEMORY=`echo $((SLURM_MEMORY/8))`
 
 
 if [ -f ${WORKING_DIR}/.first_run ]

@@ -140,12 +140,12 @@ function set_min_max(assocs) {
   if (max_mem > 264000) {
     $("#memory_per_node").attr({
        "max" : 2000,
-       "min" : 1,
+       "min" : 8,
     });
   } else {
     $("#memory_per_node").attr({
        "max" : 243,
-       "min" : 1,
+       "min" : 8,
     });
   }
 
