@@ -56,7 +56,8 @@ batch_connect:
     ######################################################
     ### ensure we have a cryosparc directory under home ##
     ######################################################
-    export CRYOSPARC_DATADIR=${HOME}/cryosparc
+    export CRYOSPARC_DATADIR=<%= cryosparc_database_directory == "" ? "${HOME}" : cryosparc_database_directory %>/cryosparc
+
     if [ ! -d "$CRYOSPARC_DATADIR" ]; then
         touch <%= staged_root %>/.first_run
         echo "Creating cryosparc datadir ${CRYOSPARC_DATADIR}..."
