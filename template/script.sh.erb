@@ -93,13 +93,14 @@ cat << EOF > ${WORKING_DIR}/slurm/quest_<%= ga_allocation %>/cluster_script.sh
 #SBATCH --ntasks-per-node={{ num_cpu }}
 #SBATCH --account=<%= ga_allocation %>
 {%- if num_gpu == 0 %}
-#SBATCH --partition=short
+#SBATCH --partition=normal
 {%- else %}
 #SBATCH --partition=gengpu
 #SBATCH --gres=gpu:{{ num_gpu }}
+#SBATCH --constraint=sxm
 {%- endif %}
 #SBATCH --mem={{ (ram_gb*1000)|int }}MB
-#SBATCH --time=04:00:00
+#SBATCH --time=48:00:00
 #SBATCH --output={{ job_dir_abs }}/job_%J.out
 #SBATCH --error={{ job_dir_abs }}/job_%J.err
 
