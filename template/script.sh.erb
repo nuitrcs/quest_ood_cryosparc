@@ -129,9 +129,16 @@ pushd ${WORKING_DIR}/slurm/quest_<%= ga_allocation %> && cryosparcm cluster conn
 # worker initiation
 ###
 echo "Starting cryosparc worker for ${CRYOSPARC_MASTER_HOSTNAME}..."
+# Check for GPUs
+<%- if list_of_buyin_allocations.include?("b1212") -%>
 export TMPDIR=${TMPDIR:-"/scratch/${THIS_USER}"}/${USER}/cryosparc/
 mkdir -p ${TMPDIR}
+chgrp -R b1212 /tmp/${USER}
 chmod 777 ${TMPDIR}
+<%- else -%>
+export TMPDIR=${TMPDIR:-"/scratch/${THIS_USER}"}/${USER}/cryosparc/
+mkdir -p ${TMPDIR}
+<%- end -%>
 
 cd ${CRYOSPARC_WORKER_DIR}
 # assume same config file
