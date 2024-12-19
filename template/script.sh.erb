@@ -113,7 +113,14 @@ singularity exec -B "<%= session_dir %>"/config_worker.sh:/app/cryosparc_worker/
 singularity exec -B "<%= session_dir %>"/config_worker.sh:/app/cryosparc_worker/config.sh --nv $SING_BINDS "${container_image}" {{ worker_bin_path }} run {{ run_args }}
 {%- endif %}
 EOF
-# Add lane
+
+# First try to remove the lane
+cryosparcm cli "remove_scheduler_target_cluster('Quest <%= ga_allocation %>')"
+
+# Then remove any previous default lanes
+cryosparcm cli "remove_scheduler_lane('default')"
+
+# Then add the lane
 pushd ${WORKING_DIR}/slurm/quest_<%= ga_allocation %> && cryosparcm cluster connect && popd
  
 <%- end %>
