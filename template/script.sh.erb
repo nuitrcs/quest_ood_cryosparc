@@ -129,8 +129,9 @@ pushd ${WORKING_DIR}/slurm/quest_<%= ga_allocation %> && cryosparcm cluster conn
 # worker initiation
 ###
 echo "Starting cryosparc worker for ${CRYOSPARC_MASTER_HOSTNAME}..."
-export TMPDIR=${TMPDIR:-"/scratch/${THIS_USER}"}/cryosparc/
+export TMPDIR=${TMPDIR:-"/scratch/${THIS_USER}"}/${USER}/cryosparc/
 mkdir -p ${TMPDIR}
+chmod 777 ${TMPDIR}
 
 cd ${CRYOSPARC_WORKER_DIR}
 # assume same config file
