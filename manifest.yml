@@ -14,5 +14,9 @@ description: |
 
    where XXXXX-XXXXX-XXXX is the license string that is sent to you by CryoSPARC upon registering with them.
 
+  If you would like to use TOPAZ 0.2.5a with cryosparc the location for topaz exectuable is as follows
+
+  `/opt/conda/envs/topaz/bin/topaz`
+
   [CryoSPARC]: https://services.northwestern.edu/TDClient/30/Portal/KB/ArticleDet?ID=2234
   [Quest cluster]: https://www.it.northwestern.edu/departments/it-services-support/research/computing/quest/index.html
