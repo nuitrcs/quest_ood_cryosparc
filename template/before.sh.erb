@@ -10,7 +10,7 @@ export cs_email="${USER}@northwestern.edu"
 
 
 # This is for conn_params
-export ssh_tunnel="ssh -L ${port}:localhost:${port} $USER@quest.northwestern.edu ssh -N -L ${port}:localhost:${port} ${host}"
+export ssh_tunnel="ssh -L ${port}:localhost:${port} $USER@login.quest.northwestern.edu ssh -N -L ${port}:localhost:${port} ${host}"
 export connection_string="http://localhost:${port}"
 export staged_root=<%= session.staged_root.join("connection.yml") %>
 

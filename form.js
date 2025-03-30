@@ -35,7 +35,8 @@ function convert_gpu_partitions(GRES) {
     if (GRES.length !== 0) {
         for (const ind_gres of GRES) {
             const gpu_info = ind_gres.split(':');
-            for (let i = 1; i <= Number(gpu_info.slice(-1)); i++) {
+            var number_of_gpus = Number(gpu_info[2].split("(")[0]);
+            for (let i = 1; i <= number_of_gpus; i++) {
                 gpu_options.push([gpu_info[0], gpu_info[1], i].join(':'));
             }
         }
@@ -121,7 +122,7 @@ function update_constraint_options(assocs) {
   var constraints_with_commas = [...new Set(assocs.map(({ feature }) => feature))];
   var constraints_without_commas = [""];
   // Find all instances of quest10_rhel8 and quest13 and find and replace with "rhel8"
-  for (var constraint of constraints_with_commas) { constraints_without_commas.push(constraint.replace("quest10_rhel8", "rhel8").replace("quest13", "rhel8").split(",")); }
+  for (var constraint of constraints_with_commas) { constraints_without_commas.push(constraint.replace("quest10_rhel8", "quest13").split(",")); }
   replace_options($("#batch_connect_session_context_constraint"), [...new Set(constraints_without_commas.flat())]);
 }
 
