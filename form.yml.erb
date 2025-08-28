@@ -46,9 +46,9 @@ attributes:
       - [ "Cryosparc 4.5.3", "/hpc/software/cryosparc/4.5.3/cryosparc-4.5.3.sif" ]
 
   cryosparc_database_directory:
-    label: "(Optional) Provide the absolute path to the directory you want to use for the CryoSPARC MongoDB database. Leave blank for the default which is `${HOME}/cryosparc/cryosparc_database`"
+    label: "(Optional) Provide the absolute path to the directory you want to use for the CryoSPARC MongoDB database. Once the abosulte path is specified, CryoSPARC will create the following folders in that location: `cryospark/cryospark_database`. Leave blank for the default location which is in your home directory."
     help: |
-      (Optional) Provide the absolute path to the directory you want to use for the CryoSPARC MongoDB database. For the purposes of contiguity between CryoSPARC sessions, please make sure that this folder is *always* the same each time you submit a CryoSPARC job. Once the abosulte path is specified, CryoSPARC will create the following folders in that location: `cryospark/cryospark_database`. Leave blank for the default location which is in your home directory."
+      (Optional) Provide the absolute path to the directory you want to use for the CryoSPARC MongoDB database. For the purposes of contiguity between CryoSPARC sessions, please make sure that this folder is *always* the same each time you submit a CryoSPARC job. Once the abosulte path is specified, CryoSPARC will create the following folders in that location: `cryospark/cryospark_database`. Leave blank for the default location which is in your home directory.
 
   bc_num_hours:
     label: "Wall Time (in number of hours)"
