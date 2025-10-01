@@ -63,6 +63,15 @@ batch_connect:
         mkdir -p ${CRYOSPARC_DATADIR}/run
         mkdir -p ${CRYOSPARC_DATADIR}/cryosparc_database
     fi
+    
+    
+    ### Set Cryosparc SSD path
+    <%- if cryosparc_ssd_path != "" %>
+    export CRYOSPARC_SSD_PATH=cryosparc_ssd_path
+    <%- else %>
+    export CRYOSPARC_SSD_PATH=""
+    <%- end %> 
+
 
     ######################################################
     ### Create the place holder config_master.sh file ####
@@ -89,6 +98,12 @@ batch_connect:
     # Other
     export CRYOSPARC_FORCE_USER=true
     export CRYOSPARC_CLICK_WRAP=true
+    
+    ### Set Cryosparc SSD path
+    <%- if cryosparc_ssd_path != "" %>
+    export CRYOSPARC_SSD_PATH=<%= cryosparc_ssd_path %>
+    <%- end %>
+    
     END
 
     ######################################################
@@ -98,6 +113,12 @@ batch_connect:
     <%- if gres_value != "" %>
     export CRYOSPARC_USE_GPU=true
     <%- end %>
+    
+    ### Set Cryosparc SSD path
+    <%- if cryosparc_ssd_path != "" %>
+    export CRYOSPARC_SSD_PATH=<%= cryosparc_ssd_path %>
+    <%- end %>
+    
     END
 
     singularity exec -B ${CRYOSPARC_DATADIR}/run:/app/cryosparc_master/run -B ${CRYOSPARC_DATADIR}/cryosparc_database:/app/cryosparc_database -B <%= staged_root %>/config_master.sh:/app/cryosparc_master/config.sh -B <%= staged_root %>/config_worker.sh:/app/cryosparc_worker/config.sh $SING_GPU $SLURM_BINDS $SING_BINDS "${container_image}" /bin/bash container.sh

@@ -9,6 +9,8 @@ form:
   - version
   # Optional setting to control where the cryosparc mongodb database is created. The default is ${HOME}/cryosparc/cryosparc_database
   - cryosparc_database_directory
+  # Optional setting to control value of CRYOSPARC_SSD_PATH. The default should be /tmp on the compute node
+  - cryosparc_ssd_path
   # This allows the user to select which partition they submit to
   - slurm_partition
   # This allows a user to request a GPU
@@ -49,6 +51,11 @@ attributes:
     label: "(Optional) Provide the absolute path to the directory you want to use for the CryoSPARC MongoDB database. Once the abosulte path is specified, CryoSPARC will create the following folders in that location: `cryospark/cryospark_database`. Leave blank for the default location which is in your home directory."
     help: |
       (Optional) Provide the absolute path to the directory you want to use for the CryoSPARC MongoDB database. For the purposes of contiguity between CryoSPARC sessions, please make sure that this folder is *always* the same each time you submit a CryoSPARC job. Once the abosulte path is specified, CryoSPARC will create the following folders in that location: `cryospark/cryospark_database`. Leave blank for the default location which is in your home directory.
+
+  cryosparc_ssd_path:
+    label: "(Optional) Provide the absolute path to the directory you want to use for the CryoSPARC SSD cache. For the best performance, this should be in your /scratch space. Leave blank for the default location which is /tmp on the compute node that runs your job."
+    help: |
+      (Optional) Provide the absolute path to the directory you want to use for the CryoSPARC SSD cache. For the best performance, this should be in your /scratch space. Leave blank for the default location which is /tmp on the compute node that runs your job. For more information, see https://guide.cryosparc.com/setup-configuration-and-management/software-system-guides/tutorial-ssd-particle-caching-in-cryosparc .
 
   bc_num_hours:
     label: "Wall Time (in number of hours)"
