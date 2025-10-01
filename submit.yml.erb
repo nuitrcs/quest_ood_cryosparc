@@ -64,15 +64,6 @@ batch_connect:
         mkdir -p ${CRYOSPARC_DATADIR}/cryosparc_database
     fi
     
-    
-    ### Set Cryosparc SSD path
-    <%- if cryosparc_ssd_path != "" %>
-    export CRYOSPARC_SSD_PATH=cryosparc_ssd_path
-    <%- else %>
-    export CRYOSPARC_SSD_PATH=""
-    <%- end %> 
-
-
     ######################################################
     ### Create the place holder config_master.sh file ####
     ######################################################
