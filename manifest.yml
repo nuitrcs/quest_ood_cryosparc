@@ -5,6 +5,8 @@ category: Interactive Apps
 subcategory: GUIs
 role: batch_connect
 description: |
+  Julia was here!
+        
   This app will launch the [CryoSPARC] GUI on the [Quest cluster].
 
   In order to use CryoSPARC, you must first get a CryoSPARC license and then add the following line to your
