@@ -15,6 +15,8 @@ all_slurm_allocations.each do |slurm_allocation|
         list_of_buyin_allocations.append(slurm_allocation)
     end
 end
+ssd_path = context.cryosparc_ssd_path.to_s.strip
+ssd_path = "/tmp" if ssd_path.empty?
 %>
 
 echo "Setting cryosparc PATH"
@@ -74,7 +76,7 @@ cat << EOF > ${WORKING_DIR}/slurm/quest_<%= ga_allocation %>/cluster_info.json
 {
 "name" : "Quest <%= ga_allocation %>",
 "worker_bin_path" : "/app/cryosparc_worker/bin/cryosparcw",
-"cache_path" : "/tmp",
+"cache_path" : "<%= ssd_path %>",
 "cache_reserve_mb" : 10000,
 "cache_quota_mb": null,
 "send_cmd_tpl" : "{{ command }}",
@@ -129,14 +131,18 @@ pushd ${WORKING_DIR}/slurm/quest_<%= ga_allocation %> && cryosparcm cluster conn
 # worker initiation
 ###
 echo "Starting cryosparc worker for ${CRYOSPARC_MASTER_HOSTNAME}..."
+
+# save SSD cache path from the form field to a different variable name for evaluating below
+SSD_PATH="<%= ssd_path %>"
+
 # Check for GPUs
 <%- if list_of_buyin_allocations.include?("b1212") -%>
-export TMPDIR=${TMPDIR:-"/scratch/${THIS_USER}"}/${USER}/cryosparc/
+export TMPDIR="${SSD_PATH}/${USER}/cryosparc/"
 mkdir -p ${TMPDIR}
-chgrp -R b1212 /tmp/${USER}
-chmod 777 ${TMPDIR}
+chgrp -R b1212 ${SSD_PATH}/${USER}
+chmod 770 ${TMPDIR}
 <%- else -%>
-export TMPDIR=${TMPDIR:-"/scratch/${THIS_USER}"}/${USER}/cryosparc/
+export TMPDIR="${SSD_PATH}/${USER}/cryosparc/"
 mkdir -p ${TMPDIR}
 <%- end -%>
 
